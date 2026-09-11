@@ -39,6 +39,21 @@ curl -X POST http://localhost:8080/api/campaigns/generate \
 - Cloud Scheduler: can call the generation endpoint weekly after an authenticated scheduler job is configured.
 - Artifact Registry and Cloud Build: build and deploy the container.
 
+## One-command Google Cloud setup
+
+From Google Cloud Shell, run:
+
+```bash
+git clone https://github.com/natureswaysoil/natureswaysoil-marketing-agent.git
+cd natureswaysoil-marketing-agent
+bash scripts/bootstrap-gcp.sh
+```
+
+The script configures project `marketingagent-508322`, enables the required APIs,
+creates Firestore and the least-privilege runtime service account, securely
+prompts for the OpenAI and GitHub tokens, builds the container, deploys Cloud
+Run, and prints the private approval-dashboard URL.
+
 The Cloud Run service account needs Firestore access and Secret Manager Secret Accessor. The GitHub fine-grained token should be limited to the `natureswaysoil/video` repository with Actions read/write permission.
 
 ## Required video-repository contract
