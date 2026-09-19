@@ -1,6 +1,14 @@
 import { z } from 'zod'
 
-export const ChannelSchema = z.enum(['youtube', 'instagram', 'facebook', 'twitter', 'pinterest', 'website'])
+export const CHANNELS = ['youtube', 'instagram', 'facebook', 'twitter', 'pinterest', 'website'] as const
+export const ChannelSchema = z.enum(CHANNELS)
+
+const PostSchema = z.object({
+  channel: ChannelSchema,
+  caption: z.string().min(10),
+  headline: z.string().min(3),
+  hashtags: z.array(z.string()).max(12)
+})
 
 export const CampaignDraftSchema = z.object({
   productId: z.string().min(1),
@@ -11,7 +19,7 @@ export const CampaignDraftSchema = z.object({
   hook: z.string().min(3),
   offer: z.string().default(''),
   callToAction: z.string().min(3),
-  factualClaims: z.array(z.string()).max(8),
+  factualClaims: z.array(z.string()).min(1).max(8),
   prohibitedClaims: z.array(z.string()).default([]),
   videoBrief: z.object({
     durationSeconds: z.number().int().min(15).max(60),
@@ -19,13 +27,18 @@ export const CampaignDraftSchema = z.object({
     overlayText: z.array(z.string()).min(2).max(8),
     brollQueries: z.array(z.string()).min(2).max(10)
   }),
-  posts: z.array(z.object({
-    channel: ChannelSchema,
-    caption: z.string().min(10),
-    headline: z.string().min(3),
-    hashtags: z.array(z.string()).max(12)
-  })).min(1),
+  posts: z.array(PostSchema).length(CHANNELS.length),
   rationale: z.string().min(10)
+}).superRefine((campaign, context) => {
+  const supplied = new Set(campaign.posts.map(post => post.channel))
+  for (const channel of CHANNELS) {
+    if (!supplied.has(channel)) {
+      context.addIssue({ code: z.ZodIssueCode.custom, path: ['posts'], message: `Missing required channel: ${channel}` })
+    }
+  }
+  if (supplied.size !== campaign.posts.length) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ['posts'], message: 'Each channel must appear exactly once' })
+  }
 })
 
 export type CampaignDraft = z.infer<typeof CampaignDraftSchema>

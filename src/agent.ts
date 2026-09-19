@@ -1,6 +1,6 @@
 import crypto from 'node:crypto'
 import OpenAI from 'openai'
-import { CampaignDraftSchema, type CampaignRecord } from './types.js'
+import { CampaignDraftSchema, CHANNELS, type CampaignRecord } from './types.js'
 import { findProduct } from './catalog.js'
 import { validateCampaignPolicy } from './policy.js'
 
@@ -13,18 +13,22 @@ export async function generateCampaign(productId: string, objective = 'conversio
     messages: [
       {
         role: 'system',
-        content: `You are the marketing planner for Nature's Way Soil & Vermicompost LLC, a small family farm in Snow Hill, North Carolina. Create truthful, practical marketing without invented certifications, guarantees, medical claims, pesticide claims, fake urgency, or unapproved discounts. Return JSON only.`
+        content: `You are the marketing planner for Nature's Way Soil & Vermicompost LLC, a small family farm in Snow Hill, North Carolina. Create truthful, practical marketing without invented certifications, guarantees, medical claims, pesticide claims, fake urgency, or unapproved discounts. Use only the exact approvedClaims supplied for factualClaims. Do not introduce additional measurable product claims in captions, headlines, overlays, or voiceover. Return JSON only.`
       },
       {
         role: 'user',
         content: JSON.stringify({
-          task: 'Create one approval-ready campaign with posts for YouTube, Instagram, Facebook, Twitter, Pinterest, and the website.',
+          task: 'Create one approval-ready campaign with exactly one post for each required channel.',
           objective,
           product,
+          requiredChannels: CHANNELS,
+          claimRules: {
+            factualClaimsMustBeSelectedVerbatimFrom: product.approvedClaims,
+            prohibitedClaims: product.prohibitedClaims
+          },
           requiredShape: {
-            productId: product.id, productName: product.name, objective: 'awareness|education|conversion|retention', audience: 'string', angle: 'string', hook: 'string', offer: 'string', callToAction: 'string', factualClaims: ['string'], prohibitedClaims: product.prohibitedClaims,
-            videoBrief: { durationSeconds: 30, voiceover: 'string', overlayText: ['string'], brollQueries: ['string'] },
-            posts: [{ channel: 'youtube|instagram|facebook|twitter|pinterest|website', caption: 'string', headline: 'string', hashtags: ['string'] }], rationale: 'string'
+            productId: product.id, productName: product.name, objective: 'awareness|education|conversion|retention', audience: 'string', angle: 'string', hook: 'string', offer: 'string', callToAction: 'string', factualClaims: ['exact approved claim'], prohibitedClaims: product.prohibitedClaims,
+            videoBrief: { durationSeconds: 30, voiceover: 'string', overlayText: ['string'], brollQueries: ['string'] }, posts: [{ channel: 'one required channel', caption: 'string', headline: 'string', hashtags: ['string'] }], rationale: 'string'
           }
         })
       }
