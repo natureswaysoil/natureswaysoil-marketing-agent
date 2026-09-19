@@ -6,6 +6,7 @@ REGION="${GOOGLE_CLOUD_REGION:-us-east1}"
 SERVICE="natures-way-marketing-agent"
 REPOSITORY="marketing"
 SERVICE_ACCOUNT="marketing-agent@${PROJECT_ID}.iam.gserviceaccount.com"
+ROTATE_SECRETS="${ROTATE_SECRETS:-false}"
 
 echo "Configuring Google Cloud project: ${PROJECT_ID}"
 gcloud config set project "${PROJECT_ID}"
@@ -45,12 +46,20 @@ if ! gcloud firestore databases describe --database='(default)' >/dev/null 2>&1;
     --type=firestore-native
 fi
 
-put_secret() {
+has_enabled_version() {
+  [[ -n "$(gcloud secrets versions list "$1" --filter='state=ENABLED' --format='value(name)' --limit=1 2>/dev/null)" ]]
+}
+
+put_secret_if_needed() {
   local name="$1"
   local prompt="$2"
   local value
   if ! gcloud secrets describe "${name}" >/dev/null 2>&1; then
     gcloud secrets create "${name}" --replication-policy=automatic
+  fi
+  if has_enabled_version "${name}" && [[ "${ROTATE_SECRETS}" != "true" ]]; then
+    echo "Keeping existing ${name}. Set ROTATE_SECRETS=true to replace it."
+    return
   fi
   read -r -s -p "${prompt}: " value
   echo
@@ -62,14 +71,20 @@ put_secret() {
   unset value
 }
 
-put_secret OPENAI_API_KEY "Paste the OpenAI API key (input is hidden)"
-put_secret GITHUB_TOKEN "Paste a fine-grained GitHub token with Actions write access to natureswaysoil/video (input is hidden)"
+put_secret_if_needed OPENAI_API_KEY "Paste the OpenAI API key (input is hidden)"
+put_secret_if_needed GITHUB_TOKEN "Paste a fine-grained GitHub token with Actions write access to natureswaysoil/video (input is hidden)"
 
 if ! gcloud secrets describe MARKETING_AGENT_APPROVAL_TOKEN >/dev/null 2>&1; then
   gcloud secrets create MARKETING_AGENT_APPROVAL_TOKEN --replication-policy=automatic
 fi
-APPROVAL_TOKEN="$(openssl rand -hex 32)"
-printf '%s' "${APPROVAL_TOKEN}" | gcloud secrets versions add MARKETING_AGENT_APPROVAL_TOKEN --data-file=-
+if ! has_enabled_version MARKETING_AGENT_APPROVAL_TOKEN; then
+  APPROVAL_TOKEN="$(openssl rand -hex 32)"
+  printf '%s' "${APPROVAL_TOKEN}" | gcloud secrets versions add MARKETING_AGENT_APPROVAL_TOKEN --data-file=-
+  echo "Created the approval token. Save it securely: ${APPROVAL_TOKEN}"
+  unset APPROVAL_TOKEN
+else
+  echo "Keeping the existing approval token."
+fi
 
 IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/agent:$(date +%Y%m%d-%H%M%S)"
 gcloud builds submit --tag "${IMAGE}" .
@@ -86,5 +101,5 @@ gcloud run deploy "${SERVICE}" \
 SERVICE_URL="$(gcloud run services describe "${SERVICE}" --region="${REGION}" --format='value(status.url)')"
 echo
 echo "Deployment complete."
-echo "Dashboard: ${SERVICE_URL}/?token=${APPROVAL_TOKEN}"
-echo "Save this dashboard URL in a secure place. The approval token is not stored in the repository."
+echo "Dashboard: ${SERVICE_URL}/login"
+echo "The approval token remains in Secret Manager. Do not place it in a URL."
