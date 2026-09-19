@@ -1,0 +1,94 @@
+name: Deploy to Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile'
+      - 'cloudbuild.yaml'
+      - '.github/workflows/deploy.yml'
+
+concurrency:
+  group: marketing-agent-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: marketingagent-508322
+  REGION: us-east1
+  SERVICE: natures-way-marketing-agent
+  IMAGE_REPOSITORY: marketing
+  WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+  WIF_SERVICE_ACCOUNT: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+  GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Authenticate with Workload Identity
+        if: env.WIF_PROVIDER != '' && env.WIF_SERVICE_ACCOUNT != ''
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Authenticate with service account JSON
+        if: env.WIF_PROVIDER == '' && env.GOOGLE_CREDENTIALS_JSON != ''
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ env.GOOGLE_CREDENTIALS_JSON }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Require configured Google credentials
+        if: env.WIF_PROVIDER == '' && env.GOOGLE_CREDENTIALS_JSON == ''
+        run: |
+          echo "::error::Configure GCP_WORKLOAD_IDENTITY_PROVIDER and GCP_SERVICE_ACCOUNT, or GOOGLE_CREDENTIALS, in repository secrets."
+          exit 1
+
+      - uses: google-github-actions/setup-gcloud@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Build container
+        run: |
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_REPOSITORY}/agent:${GITHUB_SHA}"
+          gcloud builds submit --project "${PROJECT_ID}" --tag "${IMAGE}" .
+          echo "IMAGE=${IMAGE}" >> "${GITHUB_ENV}"
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy "${SERVICE}" \
+            --project "${PROJECT_ID}" \
+            --image "${IMAGE}" \
+            --region "${REGION}" \
+            --platform managed \
+            --allow-unauthenticated \
+            --service-account "marketing-agent@${PROJECT_ID}.iam.gserviceaccount.com" \
+            --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production" \
+            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
+          SERVICE_URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
+          echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
+          echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
+          echo "${SERVICE_URL}/login" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Live health check
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if curl --fail --silent --show-error "${SERVICE_URL}/health" | tee /tmp/health.json; then
+              node -e "const fs=require('fs');const h=JSON.parse(fs.readFileSync('/tmp/health.json','utf8'));if(!h.ok||!h.configured?.approvalToken||!h.configured?.openai||!h.configured?.github||!h.configured?.project)process.exit(1)"
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
