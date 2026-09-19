@@ -19,6 +19,8 @@ function secureEqual(left: string, right: string) {
   return leftBuffer.length === rightBuffer.length && crypto.timingSafeEqual(leftBuffer, rightBuffer)
 }
 
+function routeParam(value: string | string[]) { return Array.isArray(value) ? (value[0] || '') : value }
+
 function expectedSession() {
   return token ? crypto.createHmac('sha256', token).update('marketing-agent-session-v1').digest('hex') : ''
 }
@@ -119,7 +121,7 @@ app.post('/campaigns/generate', requireDashboardAuth, async (req, res, next) => 
 
 app.post('/campaigns/:id/approve', requireDashboardAuth, async (req, res, next) => {
   try {
-    const result = await dispatch(req.params.id)
+    const result = await dispatch(routeParam(req.params.id))
     if (result.status !== 200) return res.status(result.status).send(result.message)
     res.redirect('/')
   } catch (error) { next(error) }
@@ -127,10 +129,10 @@ app.post('/campaigns/:id/approve', requireDashboardAuth, async (req, res, next) 
 
 app.post('/campaigns/:id/retry', requireDashboardAuth, async (req, res, next) => {
   try {
-    const record = await store.get(req.params.id)
+    const record = await store.get(routeParam(req.params.id))
     if (!record) return res.status(404).send('Campaign not found')
     if (record.status !== 'dispatch_failed') return res.status(409).send('Only failed dispatches can be retried')
-    const result = await dispatch(req.params.id)
+    const result = await dispatch(routeParam(req.params.id))
     if (result.status !== 200) return res.status(result.status).send(result.message)
     res.redirect('/')
   } catch (error) { next(error) }
@@ -138,7 +140,7 @@ app.post('/campaigns/:id/retry', requireDashboardAuth, async (req, res, next) =>
 
 app.post('/campaigns/:id/reject', requireDashboardAuth, async (req, res, next) => {
   try {
-    const record = await store.get(req.params.id)
+    const record = await store.get(routeParam(req.params.id))
     if (!record) return res.status(404).send('Campaign not found')
     if (record.status !== 'pending_approval') return res.status(409).send('Campaign already reviewed')
     record.status = 'rejected'
