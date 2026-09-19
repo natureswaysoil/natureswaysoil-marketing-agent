@@ -12,9 +12,9 @@ steps:
       - --image=us-east1-docker.pkg.dev/$PROJECT_ID/marketing/agent:$COMMIT_SHA
       - --region=us-east1
       - --platform=managed
-      - --no-allow-unauthenticated
+      - --allow-unauthenticated
       - --service-account=marketing-agent@$PROJECT_ID.iam.gserviceaccount.com
-      - --set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID
+      - --set-env-vars=GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini
       - --set-secrets=OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest
 images:
   - us-east1-docker.pkg.dev/$PROJECT_ID/marketing/agent:$COMMIT_SHA
