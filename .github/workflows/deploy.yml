@@ -60,10 +60,12 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Build container
+      - name: Build and push container
         run: |
           IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${IMAGE_REPOSITORY}/agent:${GITHUB_SHA}"
-          gcloud builds submit --project "${PROJECT_ID}" --tag "${IMAGE}" .
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build --tag "${IMAGE}" .
+          docker push "${IMAGE}"
           echo "IMAGE=${IMAGE}" >> "${GITHUB_ENV}"
 
       - name: Deploy Cloud Run
