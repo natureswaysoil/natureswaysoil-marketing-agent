@@ -75,22 +75,14 @@ jobs:
             --image "${IMAGE}" \
             --region "${REGION}" \
             --platform managed \
-            --allow-unauthenticated \
+            --no-invoker-iam-check \
             --service-account "marketing-agent@${PROJECT_ID}.iam.gserviceaccount.com" \
-            --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production" \
-            --set-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
+            --update-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production" \
+            --update-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
           SERVICE_URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
           echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
           echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
           echo "${SERVICE_URL}/login" >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Live health check
-        run: |
-          for attempt in 1 2 3 4 5; do
-            if curl --fail --silent --show-error "${SERVICE_URL}/health" | tee /tmp/health.json; then
-              node -e "const fs=require('fs');const h=JSON.parse(fs.readFileSync('/tmp/health.json','utf8'));if(!h.ok||!h.configured?.approvalToken||!h.configured?.openai||!h.configured?.github||!h.configured?.project)process.exit(1)"
-              exit 0
-            fi
-            sleep 5
-          done
-          exit 1
+      - name: Verify public login and authenticated dashboard without publishing
+        run: python3 scripts/verify_live_integrations.py
