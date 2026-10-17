@@ -19,7 +19,7 @@ Recovery is intentionally manual after a claim: inspect receipts and platform re
 
 ## Campaign connection
 
-`CAMPAIGN_BASE_URL` is an optional HTTPS origin. `CAMPAIGN_READ_TOKEN` is an optional Secret Manager value passed in `X-Daily-Optimizer-Token`. The adapter implements only GET `/api/profit/status` and GET `/api/profit/eligibility/<numeric campaign ID>`. No bids, budgets, settings, costs or launch flags are changed. Existing safety blocker explanations are passed through.
+`CAMPAIGN_BASE_URL` is an optional HTTPS origin. `CAMPAIGN_READ_TOKEN` is the dedicated `CAMPAIGN_MARKETING_READ_TOKEN` Secret Manager value passed in `X-Marketing-Read-Token`. The adapter implements only GET `/api/profit/status` and GET `/api/profit/eligibility/<numeric campaign ID>`. No bids, budgets, settings, costs or launch flags are changed. Existing safety blocker explanations are passed through.
 
 Configure these values only during a separately approved deployment. The existing deployment workflow uses `--set-env-vars`; add the selected URL and a secret reference there when enabling the connection so later deploys do not remove them. No secret values belong in git.
 
@@ -34,3 +34,4 @@ Configure these values only during a separately approved deployment. The existin
 Shared catalog/landing-page migration and website/social adapters remain separate patches. No claim of live publishing validation is made by the offline tests.
 
 Validation: agent type-check/build and offline tests pass. Video production `src` type-check and marketing contract tests pass after `npm ci --ignore-scripts`. Explicit strict checking of the posting scripts encounters five existing nullable/type errors in `post-scheduled.ts`; running the same command on the unchanged main-branch script reproduces all five. No live Google Cloud or social publishing validation was performed.
+

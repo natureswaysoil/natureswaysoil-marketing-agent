@@ -62,7 +62,7 @@ test('durable dispatch, reconciliation, and read-only adapter', async t => {
    await reconcile(store,'campaign-1');assert.equal((await store.get('campaign-1'))!.job!.runId,undefined)
   })
   await t.test('Campaign GET preserves blockers and refuses invalid origins/IDs',async()=>{
-   globalThis.fetch=async(input,init)=>{assert.equal(init?.method,'GET');assert.equal(new Headers(init?.headers).get('X-Daily-Optimizer-Token'),'private');return Response.json({status:'blocked',reason:'insufficient_mature_conversion_data'})}
+   globalThis.fetch=async(input,init)=>{assert.equal(init?.method,'GET');assert.equal(new Headers(init?.headers).get('X-Marketing-Read-Token'),'private');return Response.json({status:'blocked',reason:'insufficient_mature_conversion_data'})}
    const reader=new CampaignReader('https://optimizer.example','private');const result=await reader.eligibility('123')
    assert.equal((result as any).data.reason,'insufficient_mature_conversion_data')
    await assert.rejects(()=>new CampaignReader('http://optimizer.example').status());assert.throws(()=>reader.eligibility('../policy'))
@@ -70,3 +70,4 @@ test('durable dispatch, reconciliation, and read-only adapter', async t => {
   })
  } finally {globalThis.fetch=original;delete process.env.GITHUB_TOKEN}
 })
+
