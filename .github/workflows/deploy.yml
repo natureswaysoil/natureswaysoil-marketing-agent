@@ -83,5 +83,18 @@ jobs:
           echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
           echo "${SERVICE_URL}/login" >> "${GITHUB_STEP_SUMMARY}"
 
+      - name: Create identity token for protected smoke checks
+        id: smoke_identity
+        if: env.WIF_PROVIDER != '' && env.WIF_SERVICE_ACCOUNT != ''
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+          token_format: id_token
+          id_token_audience: ${{ env.SERVICE_URL }}
+          id_token_include_email: true
+
       - name: Verify authenticated integrations without publishing
+        env:
+          CLOUD_RUN_ID_TOKEN: ${{ steps.smoke_identity.outputs.id_token }}
         run: python3 scripts/verify_live_integrations.py

@@ -6,7 +6,7 @@ import urllib.request
 
 base = os.environ['SERVICE_URL']
 token = subprocess.check_output(['gcloud', 'secrets', 'versions', 'access', 'latest', '--secret=MARKETING_AGENT_APPROVAL_TOKEN', '--project=' + os.environ['PROJECT_ID']], text=True).strip()
-identity = subprocess.check_output(['gcloud', 'auth', 'print-identity-token', '--audiences=' + base], text=True).strip()
+identity = os.environ.get('CLOUD_RUN_ID_TOKEN') or subprocess.check_output(['gcloud', 'auth', 'print-identity-token', '--audiences=' + base], text=True).strip()
 for path in ['/health', '/', '/api/campaign/status']:
     request = urllib.request.Request(base + path, headers={'x-approval-token': token, 'X-Serverless-Authorization': 'Bearer ' + identity})
     with urllib.request.urlopen(request, timeout=45) as response:
