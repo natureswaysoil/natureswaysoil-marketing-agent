@@ -34,4 +34,3 @@ Configure these values only during a separately approved deployment. The existin
 Shared catalog/landing-page migration and website/social adapters remain separate patches. No claim of live publishing validation is made by the offline tests.
 
 Validation: agent type-check/build and offline tests pass. Video production `src` type-check and marketing contract tests pass after `npm ci --ignore-scripts`. Explicit strict checking of the posting scripts encounters five existing nullable/type errors in `post-scheduled.ts`; running the same command on the unchanged main-branch script reproduces all five. No live Google Cloud or social publishing validation was performed.
-
