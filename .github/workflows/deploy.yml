@@ -75,26 +75,14 @@ jobs:
             --image "${IMAGE}" \
             --region "${REGION}" \
             --platform managed \
+            --no-invoker-iam-check \
             --service-account "marketing-agent@${PROJECT_ID}.iam.gserviceaccount.com" \
-            --update-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production,CAMPAIGN_BASE_URL=https://campaign-optimizer-366028971954.us-central1.run.app" \
-            --update-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest,CAMPAIGN_READ_TOKEN=projects/366028971954/secrets/CAMPAIGN_MARKETING_READ_TOKEN:latest"
+            --update-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production" \
+            --update-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
           SERVICE_URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
           echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
           echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
           echo "${SERVICE_URL}/login" >> "${GITHUB_STEP_SUMMARY}"
 
-      - name: Create identity token for protected smoke checks
-        id: smoke_identity
-        if: env.WIF_PROVIDER != '' && env.WIF_SERVICE_ACCOUNT != ''
-        uses: google-github-actions/auth@v3
-        with:
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
-          token_format: id_token
-          id_token_audience: ${{ env.SERVICE_URL }}
-          id_token_include_email: true
-
-      - name: Verify authenticated integrations without publishing
-        env:
-          CLOUD_RUN_ID_TOKEN: ${{ steps.smoke_identity.outputs.id_token }}
+      - name: Verify public login and authenticated dashboard without publishing
         run: python3 scripts/verify_live_integrations.py
