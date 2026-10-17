@@ -2,6 +2,7 @@ import { Firestore } from '@google-cloud/firestore'
 import type { CampaignRecord, CampaignStatus } from './types.js'
 
 export interface CampaignStore {
+  update(id: string, change: (record: CampaignRecord) => CampaignRecord | null): Promise<CampaignRecord | null>
   save(record: CampaignRecord): Promise<void>
   get(id: string): Promise<CampaignRecord | null>
   list(status?: CampaignStatus): Promise<CampaignRecord[]>
@@ -11,6 +12,17 @@ export class FirestoreCampaignStore implements CampaignStore {
   private readonly collection
   constructor(projectId = process.env.GOOGLE_CLOUD_PROJECT) {
     this.collection = new Firestore({ projectId }).collection('marketing_campaigns')
+  }
+  async update(id: string, change: (record: CampaignRecord) => CampaignRecord | null) {
+    return this.collection.firestore.runTransaction(async tx => {
+      const ref = this.collection.doc(id)
+      const snap = await tx.get(ref)
+      if (!snap.exists) return null
+      const next = change(snap.data() as CampaignRecord)
+      if (!next) return null
+      tx.set(ref, next)
+      return next
+    })
   }
   async save(record: CampaignRecord) { await this.collection.doc(record.id).set(record) }
   async get(id: string) {
@@ -26,6 +38,14 @@ export class FirestoreCampaignStore implements CampaignStore {
 
 export class MemoryCampaignStore implements CampaignStore {
   private records = new Map<string, CampaignRecord>()
+  async update(id: string, change: (record: CampaignRecord) => CampaignRecord | null) {
+    const record = this.records.get(id)
+    if (!record) return null
+    const next = change(structuredClone(record))
+    if (!next) return null
+    this.records.set(id, structuredClone(next))
+    return structuredClone(next)
+  }
   async save(record: CampaignRecord) { this.records.set(record.id, structuredClone(record)) }
   async get(id: string) { return this.records.has(id) ? structuredClone(this.records.get(id)!) : null }
   async list(status?: CampaignStatus) {

@@ -2,7 +2,8 @@ import crypto from 'node:crypto'
 import express from 'express'
 import { generateCampaign } from './agent.js'
 import { PRODUCTS } from './catalog.js'
-import { dispatchToVideo } from './dispatcher.js'
+import { approveAndDispatch, reconcile } from './jobs.js'
+import { CampaignReader } from './integrations/campaign.js'
 import { renderDashboard } from './dashboard.js'
 import { FirestoreCampaignStore, MemoryCampaignStore, type CampaignStore } from './store.js'
 
@@ -46,26 +47,20 @@ function requireDashboardAuth(req: express.Request, res: express.Response, next:
 }
 
 async function dispatch(recordId: string) {
-  const record = await store.get(recordId)
-  if (!record) return { status: 404, message: 'Campaign not found' }
-  if (!['pending_approval', 'dispatch_failed'].includes(record.status)) return { status: 409, message: 'Campaign is not ready for dispatch' }
-
-  record.status = 'approved'
-  record.reviewerNote = undefined
-  record.updatedAt = new Date().toISOString()
-  await store.save(record)
-
-  try {
-    await dispatchToVideo(record)
-    record.status = 'dispatched'
-  } catch (error) {
-    record.status = 'dispatch_failed'
-    record.reviewerNote = error instanceof Error ? error.message : String(error)
-  }
-  record.updatedAt = new Date().toISOString()
-  await store.save(record)
-  return { status: 200, message: record.status }
+  const accepted = await approveAndDispatch(store, recordId)
+  return { status: accepted ? 200 : 409, message: accepted ? 'Dispatch recorded' : 'Campaign is already claimed or requires reconciliation' }
 }
+
+app.post('/campaigns/:id/reconcile', requireDashboardAuth, async (req, res, next) => {
+  try { await reconcile(store, routeParam(req.params.id)); res.redirect('/') } catch (error) { next(error) }
+})
+
+app.get('/api/campaign/status', requireDashboardAuth, async (_req, res, next) => {
+  try { res.json(await new CampaignReader().status()) } catch (error) { next(error) }
+})
+app.get('/api/campaign/eligibility/:id', requireDashboardAuth, async (req, res, next) => {
+  try { res.json(await new CampaignReader().eligibility(routeParam(req.params.id))) } catch (error) { next(error) }
+})
 
 app.get('/health', (_req, res) => res.json({
   ok: true,
@@ -140,12 +135,8 @@ app.post('/campaigns/:id/retry', requireDashboardAuth, async (req, res, next) =>
 
 app.post('/campaigns/:id/reject', requireDashboardAuth, async (req, res, next) => {
   try {
-    const record = await store.get(routeParam(req.params.id))
-    if (!record) return res.status(404).send('Campaign not found')
-    if (record.status !== 'pending_approval') return res.status(409).send('Campaign already reviewed')
-    record.status = 'rejected'
-    record.updatedAt = new Date().toISOString()
-    await store.save(record)
+    const record = await store.update(routeParam(req.params.id), current => current.status === 'pending_approval' ? { ...current, status: 'rejected', updatedAt: new Date().toISOString() } : null)
+    if (!record) return res.status(409).send('Campaign missing or already reviewed')
     res.redirect('/')
   } catch (error) { next(error) }
 })
