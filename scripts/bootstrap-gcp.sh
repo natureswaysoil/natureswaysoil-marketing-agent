@@ -72,7 +72,6 @@ put_secret_if_needed() {
 }
 
 put_secret_if_needed OPENAI_API_KEY "Paste the OpenAI API key (input is hidden)"
-put_secret_if_needed GITHUB_TOKEN "Paste a fine-grained GitHub token with Actions write access to natureswaysoil/video (input is hidden)"
 
 if ! gcloud secrets describe MARKETING_AGENT_APPROVAL_TOKEN >/dev/null 2>&1; then
   gcloud secrets create MARKETING_AGENT_APPROVAL_TOKEN --replication-policy=automatic
@@ -93,10 +92,11 @@ gcloud run deploy "${SERVICE}" \
   --image="${IMAGE}" \
   --region="${REGION}" \
   --platform=managed \
-  --allow-unauthenticated \
+  --no-invoker-iam-check \
   --service-account="${SERVICE_ACCOUNT}" \
-  --set-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini" \
-  --set-secrets="OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
+  --update-env-vars="GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production,AUTOMATION_ENABLED=true" \
+  --remove-secrets=GITHUB_TOKEN \
+  --update-secrets="OPENAI_API_KEY=OPENAI_API_KEY:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
 
 SERVICE_URL="$(gcloud run services describe "${SERVICE}" --region="${REGION}" --format='value(status.url)')"
 echo

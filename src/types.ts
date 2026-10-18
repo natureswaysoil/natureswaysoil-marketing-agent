@@ -49,6 +49,13 @@ export type CampaignRecord = CampaignDraft & {
   status: CampaignStatus
   createdAt: string
   updatedAt: string
+  schemaVersion?: number
+  websiteUrl?: string
+  productImageUrl?: string
+  asin?: string
+  sku?: string
+  automatic?: boolean
+  queueOrder?: string
   reviewerNote?: string
   job?: VideoJob
   dispatchRunUrl?: string
@@ -57,6 +64,7 @@ export type CampaignRecord = CampaignDraft & {
 
 export type ChannelOutcome = { status: 'draft_only' | 'unconfirmed' | 'published' | 'skipped'; postId?: string }
 export type VideoJob = {
+  transport?: 'pull'
   revision: number
   id: string
   state: 'dispatching' | 'accepted' | 'rejected' | 'unconfirmed' | 'queued' | 'running' | 'completed' | 'failed'
@@ -68,3 +76,4 @@ export type VideoJob = {
   note?: string
   channels: Record<string, ChannelOutcome>
 }
+

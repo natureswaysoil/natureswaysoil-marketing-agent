@@ -7,7 +7,7 @@ import urllib.request
 base = os.environ['SERVICE_URL']
 with urllib.request.urlopen(base + '/health', timeout=45) as response:
     health = json.load(response)
-if not health.get('ok') or not all(health.get('configured', {}).get(key) for key in ['approvalToken', 'openai', 'github', 'project']):
+if not health.get('ok') or not all(health.get('configured', {}).get(key) for key in ['approvalToken', 'openai', 'worker', 'project']):
     raise RuntimeError('Health configuration check failed')
 with urllib.request.urlopen(base + '/login', timeout=45) as response:
     if b'type="password"' not in response.read():
@@ -22,7 +22,7 @@ for path in ['/', '/api/campaign/status']:
     with urllib.request.urlopen(request, timeout=45) as response:
         body = response.read()
     if path == '/':
-        if b'Amazon eligibility' not in body:
+        if b'Automatic product rotation' not in body:
             raise RuntimeError('Dashboard version check failed')
         print('Authenticated dashboard and Firestore read: PASS')
     else:

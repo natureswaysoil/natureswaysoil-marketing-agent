@@ -1,80 +1,34 @@
 # Nature's Way Soil Marketing Agent
 
-Approval-first AI campaign planning for Nature's Way Soil & Vermicompost LLC.
+Automatic catalog rotation with liquid bone meal featured in alternating slots, plus an approval queue for manual drafts.
 
-## What it does
+- Fourteen product families from the reviewed website catalog, with product-specific links and images.
+- Five existing video posting windows: 8 AM, 11 AM, 2 PM, 5 PM and 8 PM Eastern.
+- Automatic copy uses reviewed catalog facts. Prices, discounts and application rates are excluded.
+- Manual drafts require approval; approved jobs queue for the next video worker.
+- The dashboard can pause/resume automatic claims and shows per-channel receipts.
+- Pinterest and website copy remain drafts; no Amazon advertising settings are changed.
 
-1. Creates product-specific campaigns and channel copy with OpenAI.
-2. Restricts declared factual claims to the product's approved catalog claims.
-3. Requires a complete six-channel campaign.
-4. Saves drafts in Firestore with `pending_approval` status.
-5. Presents a private approval dashboard with secure cookie sessions.
-6. Sends an approved campaign to the existing `natureswaysoil/video` GitHub Actions workflow.
-7. Preserves failed dispatches and lets an authorized reviewer retry them.
+The video worker uses short-lived GitHub OIDC, restricted to the exact main-branch video workflow. No GitHub personal token is needed. A Firestore transaction reserves each run and slot; interrupted or uncertain publication is never automatically replayed. See [AUTOMATIC_ROTATION.md](AUTOMATIC_ROTATION.md) for policy, trust, recovery and rollout details.
 
-The agent cannot publish an unapproved campaign. It does not change prices, discounts, ad budgets, product directions, or regulatory claims.
-
-## Local setup
+## Development
 
 ```bash
 cp .env.example .env
-npm install
+npm ci
+npm run typecheck
+npm test
 npm run dev
 ```
 
-Open `http://localhost:8080/login` and enter the `APPROVAL_TOKEN` from your local `.env` file.
+Use `APPROVAL_TOKEN` to sign in at `/login`, or send it in `x-approval-token` from a trusted API client. Never put it in a URL.
 
-A trusted API client can create a campaign with the approval token header:
+## Production
 
-```bash
-curl -X POST http://localhost:8080/api/campaigns/generate \
-  -H 'content-type: application/json' \
-  -H 'x-approval-token: YOUR_APPROVAL_TOKEN' \
-  -d '{"productId":"dog-urine-neutralizer-32oz","objective":"conversion"}'
-```
+Project: `marketingagent-508322`. Cloud Run hosts the private application dashboard behind approval-token sign-in; the public login page is intentionally reachable. Firestore stores campaigns, worker runs, slot reservations and rotation controls. Secret Manager holds OpenAI and approval credentials. The GitHub deployment workflow validates public login protection and authenticated dashboard/storage reads without generating or publishing content.
 
-Never put the approval token in a URL.
+Deploy the agent before updating the trusted `natureswaysoil/video` workflow. The activation file in that repository starts the first automatic liquid bone meal campaign once. Later scheduled runs rotate products. Pause blocks new claims; an in-progress video may finish.
 
-## Google Cloud resources
+The catalog snapshot and reviewed claims live in `src/catalog-data.json`. Update those from verified product sources. Do not import arbitrary website claims into unattended copy. Snapshot stock flags are not live Amazon inventory.
 
-- Cloud Run: hosts the API and approval dashboard.
-- Firestore: stores campaign drafts, decisions, and dispatch status.
-- Secret Manager: `OPENAI_API_KEY`, `GITHUB_TOKEN`, and `MARKETING_AGENT_APPROVAL_TOKEN`.
-- Artifact Registry and Cloud Build: build and deploy the container.
-
-## One-command Google Cloud setup
-
-From Google Cloud Shell, run:
-
-```bash
-git clone https://github.com/natureswaysoil/natureswaysoil-marketing-agent.git
-cd natureswaysoil-marketing-agent
-bash scripts/bootstrap-gcp.sh
-```
-
-The script configures project `marketingagent-508322`, enables the required APIs,
-creates Firestore and the least-privilege runtime service account, prompts for
-missing OpenAI and GitHub tokens, builds the container, deploys Cloud Run, and
-prints the approval-dashboard login URL.
-
-Repeated runs preserve existing secrets and the approval token. To intentionally
-replace the OpenAI and GitHub secret values, run:
-
-```bash
-ROTATE_SECRETS=true bash scripts/bootstrap-gcp.sh
-```
-
-The Cloud Run service account needs Firestore access and Secret Manager Secret Accessor. The GitHub fine-grained token should be limited to the `natureswaysoil/video` repository with Actions read/write permission.
-
-## Required video-repository contract
-
-The selected workflow must accept a `marketing_campaign` workflow-dispatch input containing base64url-encoded campaign JSON. The agent deliberately does not place credentials or product claims in GitHub logs.
-
-## Initial products
-
-- Dog Urine Neutralizer & Lawn Revitalizer
-- Hay, Pasture & Lawn Fertilizer
-- Liquid Biochar with Kelp, Humic & Fulvic Acid
-- Premium Hay, Pasture & Lawn Recovery System
-
-Verify every price, label direction, coverage statement, and safety claim before changing `src/catalog.ts`. Only approved label and website claims belong in `approvedClaims`.
+Campaign profitability/eligibility reads are optional and require the separate dedicated read-only secret configured by `scripts/connect-campaign-reader.sh`. The agent never needs the optimizer operator token.
