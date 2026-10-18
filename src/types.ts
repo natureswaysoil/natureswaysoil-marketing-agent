@@ -55,6 +55,7 @@ export type CampaignRecord = CampaignDraft & {
   asin?: string
   sku?: string
   automatic?: boolean
+  queueOrder?: string
   reviewerNote?: string
   job?: VideoJob
   dispatchRunUrl?: string
@@ -75,3 +76,4 @@ export type VideoJob = {
   note?: string
   channels: Record<string, ChannelOutcome>
 }
+

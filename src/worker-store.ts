@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { Firestore } from '@google-cloud/firestore'
 import type { CampaignRecord, VideoJob, ChannelOutcome } from './types.js'
+import type { CampaignStore } from './store.js'
 import type { WorkerIdentity } from './worker-auth.js'
 import { rotationDraft, rotationProduct } from './rotation.js'
 export type AutomationState = { enabled:boolean; cursor:number; updatedAt?:string; lastCampaignId?:string; lastRunId?:string }
@@ -18,7 +19,8 @@ export function queuedJob(record:CampaignRecord):VideoJob {
 }
 export function assigned(record:CampaignRecord,identity:WorkerIdentity,now:string):CampaignRecord {
  const job=record.job||queuedJob(record)
- return {...record,status:'dispatched',updatedAt:now,job:{...job,transport:'pull',state:'running',runId:Number(identity.runId),runUrl:`https://github.com/natureswaysoil/video/actions/runs/${identity.runId}`,updatedAt:now,note:'Trusted video worker claimed this job; interrupted work is never automatically replayed'}}
+ const {queueOrder:_queueOrder,...ready}=record
+ return {...ready,status:'dispatched',updatedAt:now,job:{...job,transport:'pull',state:'running',runId:Number(identity.runId),runUrl:`https://github.com/natureswaysoil/video/actions/runs/${identity.runId}`,updatedAt:now,note:'Trusted video worker claimed this job; interrupted work is never automatically replayed'}}
 }
 export function applyReport(record:CampaignRecord,report:Report,now:string):CampaignRecord {
  const job=structuredClone(record.job!)
@@ -41,11 +43,12 @@ export class FirestoreWorkerStore implements WorkerStore {
   const slotRef=this.db.collection('marketing_worker_slots').doc(slot)
   const id=crypto.randomUUID()
   return this.db.runTransaction(async tx=>{
-   const [stateSnap,runSnap,slotSnap,pending]=await Promise.all([tx.get(this.control),tx.get(runRef),tx.get(slotRef),tx.get(this.db.collection('marketing_campaigns').where('status','==','approved').limit(100))])
+   const [stateSnap,runSnap,slotSnap,pending]=await Promise.all([tx.get(this.control),tx.get(runRef),tx.get(slotRef),tx.get(this.db.collection('marketing_campaigns').orderBy('queueOrder','asc').limit(1))])
    const state={...defaults(),...stateSnap.data()} as AutomationState
    if(!state.enabled)return {status:'paused'}
    if(runSnap.exists||slotSnap.exists)return {status:'already_claimed'}
-   const queued=pending.docs.map(d=>d.data() as CampaignRecord).filter(c=>c.job?.transport==='pull'&&c.job.state==='queued').sort((a,b)=>a.createdAt.localeCompare(b.createdAt))[0]
+   const queued=pending.docs[0]?.data() as CampaignRecord|undefined
+   if(queued && (queued.status!=='approved'||queued.job?.transport!=='pull'||queued.job.state!=='queued'))throw new Error('Queue metadata requires review')
    const now=new Date().toISOString()
    const draft=queued||rotationDraft(rotationProduct(state.cursor),id,state.cursor,now)
    const campaign=assigned(draft,identity,now)
@@ -69,4 +72,33 @@ export class FirestoreWorkerStore implements WorkerStore {
    tx.update(runRef,{reported:true,reportedAt:now})
   })
  }
+}
+
+// Local/test storage shares the same campaign collection as the local dashboard.
+export class MemoryWorkerStore implements WorkerStore {
+ private control=defaults()
+ private runs=new Map<string,{campaignId:string;jobId:string;reported:boolean}>()
+ private slots=new Set<string>()
+ private serial=Promise.resolve()
+ constructor(private campaigns:CampaignStore){}
+ async state(){return structuredClone(this.control)}
+ async enable(enabled:boolean){this.control.enabled=enabled;this.control.updatedAt=new Date().toISOString()}
+ private exclusive<T>(fn:()=>Promise<T>):Promise<T>{const result=this.serial.then(fn);this.serial=result.then(()=>undefined,()=>undefined);return result}
+ claim(identity:WorkerIdentity,slot:string):Promise<WorkerResult>{return this.exclusive(async()=>{
+  if(!this.control.enabled)return {status:'paused'}
+  if(this.runs.has(identity.runId)||this.slots.has(slot))return {status:'already_claimed'}
+  const queued=(await this.campaigns.list('approved')).filter(c=>c.queueOrder&&c.job?.transport==='pull'&&c.job.state==='queued').sort((a,b)=>a.queueOrder!.localeCompare(b.queueOrder!))[0]
+  const now=new Date().toISOString()
+  const campaign=assigned(queued||rotationDraft(rotationProduct(this.control.cursor),crypto.randomUUID(),this.control.cursor,now),identity,now)
+  await this.campaigns.save(campaign)
+  this.runs.set(identity.runId,{campaignId:campaign.id,jobId:campaign.job!.id,reported:false});this.slots.add(slot)
+  this.control.cursor+=queued?0:1;this.control.lastRunId=identity.runId;this.control.lastCampaignId=campaign.id;this.control.updatedAt=now
+  return {status:'claimed',campaign}
+ })}
+ report(identity:WorkerIdentity,report:Report){return this.exclusive(async()=>{
+  const run=this.runs.get(identity.runId);const campaign=await this.campaigns.get(report.campaignId)
+  if(!run||!campaign||run.campaignId!==report.campaignId||run.jobId!==report.jobId||campaign.job?.runId!==Number(identity.runId))throw new Error('Worker report identity mismatch')
+  if(run.reported)return
+  await this.campaigns.save(applyReport(campaign,report,new Date().toISOString()));run.reported=true
+ })}
 }

@@ -10,7 +10,7 @@ export async function approveAndDispatch(store:CampaignStore,id:string){
   if(!(record.status==='pending_approval'&&!record.job)&&!(record.status==='dispatch_failed'&&record.job?.state==='rejected'))return null
   const product=findProduct(record.productId)
   if(!validateCampaignPolicy(record,product).ok)throw new Error('This legacy draft needs regeneration from the current catalog')
-  return {...record,status:'approved',job:queuedJob(record),updatedAt:new Date().toISOString()}
+  return {...record,status:'approved',queueOrder:new Date().toISOString(),job:queuedJob(record),updatedAt:new Date().toISOString()}
  })
  return Boolean(claimed)
 }
@@ -24,3 +24,4 @@ export async function reconcile(store: CampaignStore, id: string): Promise<Campa
     return { ...current, job: { ...updated, revision: current.job.revision + 1 } }
   })
 }
+

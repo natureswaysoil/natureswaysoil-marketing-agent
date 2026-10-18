@@ -1,16 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import {MemoryCampaignStore} from '../src/store.js'
+import {approveAndDispatch} from '../src/jobs.js'
+import {rotationDraft} from '../src/rotation.js'
+import {PRODUCTS} from '../src/catalog.js'
 import type { Firestore } from '@google-cloud/firestore'
-import {FirestoreWorkerStore} from '../src/worker-store.js'
+import {FirestoreWorkerStore,MemoryWorkerStore} from '../src/worker-store.js'
 class FakeDb {
  rows=new Map<string,any>();serial=Promise.resolve()
  collection(name:string){
   const db=this
-  return {doc(id:string){const path=name+'/'+id;return {path,async get(){return db.snapshot(path)},async set(value:any,options?:any){db.rows.set(path,options?.merge?{...db.rows.get(path),...value}:structuredClone(value))}}},where(field:string,_op:string,value:any){return {query:name,field,value,limit(_n:number){return this}}}}
+  return {doc(id:string){const path=name+'/'+id;return {path,async get(){return db.snapshot(path)},async set(value:any,options?:any){db.rows.set(path,options?.merge?{...db.rows.get(path),...value}:structuredClone(value))}}},orderBy(field:string,_direction:string){return {query:name,field,count:1,limit(n:number){this.count=n;return this}}}}
  }
  snapshot(path:string,rows=this.rows){const value=rows.get(path);return {exists:value!==undefined,data:()=>structuredClone(value)}}
  async runTransaction<T>(fn:(tx:any)=>Promise<T>):Promise<T>{
-  const execute=async()=>{const staged=new Map(this.rows);const tx={get:async(ref:any)=>ref.query?{docs:[...staged.entries()].filter(([key,row])=>key.startsWith(ref.query+'/')&&row[ref.field]===ref.value).map(([,row])=>({data:()=>structuredClone(row)}))}:this.snapshot(ref.path,staged),set:(ref:any,value:any)=>staged.set(ref.path,structuredClone(value)),update:(ref:any,value:any)=>staged.set(ref.path,{...staged.get(ref.path),...value})};const result=await fn(tx);this.rows=staged;return result}
+  const execute=async()=>{const staged=new Map(this.rows);const tx={get:async(ref:any)=>ref.query?{docs:[...staged.entries()].filter(([key,row])=>key.startsWith(ref.query+'/')&&row[ref.field]!==undefined).sort((a,b)=>String(a[1][ref.field]).localeCompare(String(b[1][ref.field]))).slice(0,ref.count).map(([,row])=>({data:()=>structuredClone(row)}))}:this.snapshot(ref.path,staged),set:(ref:any,value:any)=>staged.set(ref.path,structuredClone(value)),update:(ref:any,value:any)=>staged.set(ref.path,{...staged.get(ref.path),...value})};const result=await fn(tx);this.rows=staged;return result}
   const result=this.serial.then(execute);this.serial=result.then(()=>undefined,()=>undefined);return result
  }
 }
@@ -35,4 +39,18 @@ test('atomic worker claims, slot locks, pause, and receipts',async t=>{
  await store.report(first,{...report,success:true,channels:{youtube:{status:'published',postId:'changed'}}});assert.equal(db.rows.get('marketing_campaigns/'+campaign.id).job.channels.youtube.postId,'yt-id')
  assert.equal((await store.claim(first,'another-slot')).status,'already_claimed')
  delete process.env.AUTOMATION_ENABLED
+})
+
+test('queued work is found behind hundreds of legacy approved holds without a composite index',async()=>{
+ process.env.AUTOMATION_ENABLED='true';const db=new FakeDb();const store=new FirestoreWorkerStore(db as unknown as Firestore)
+ for(let i=0;i<150;i++)db.rows.set('marketing_campaigns/legacy-'+i,{id:'legacy-'+i,status:'approved',job:{state:'dispatching'}})
+ const campaigns=new MemoryCampaignStore();const draft={...rotationDraft(PRODUCTS[4],'b603bbd0-9d1f-4d0c-9777-415b7cac6d05',0,new Date().toISOString()),status:'pending_approval' as const};await campaigns.save(draft);await approveAndDispatch(campaigns,draft.id);db.rows.set('marketing_campaigns/'+draft.id,await campaigns.get(draft.id))
+ const result=await store.claim({runId:'999',event:'schedule'},'queue-test');assert.equal(result.status,'claimed');if(result.status==='claimed'){assert.equal(result.campaign.id,draft.id);assert.equal(result.campaign.queueOrder,undefined)}assert.equal((await store.state()).cursor,0);delete process.env.AUTOMATION_ENABLED
+})
+test('memory mode uses shared campaigns and keeps pause/receipts in memory',async()=>{
+ const campaigns=new MemoryCampaignStore();const worker=new MemoryWorkerStore(campaigns);await worker.enable(true)
+ const draft={...rotationDraft(PRODUCTS[4],'b603bbd0-9d1f-4d0c-9777-415b7cac6d05',0,new Date().toISOString()),status:'pending_approval' as const};await campaigns.save(draft);await approveAndDispatch(campaigns,draft.id)
+ const identity={runId:'777',event:'schedule' as const};const result=await worker.claim(identity,'memory-slot');assert.equal(result.status,'claimed');if(result.status!=='claimed')throw new Error('missing claim');assert.equal(result.campaign.id,draft.id)
+ await worker.report(identity,{campaignId:draft.id,jobId:result.campaign.job!.id,success:true,channels:{youtube:{status:'published',postId:'yt'}}});assert.equal((await campaigns.get(draft.id))!.job!.channels.youtube.postId,'yt')
+ await worker.enable(false);assert.equal((await worker.claim({runId:'778',event:'schedule'},'next')).status,'paused')
 })

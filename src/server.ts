@@ -1,5 +1,5 @@
 import crypto from 'node:crypto'
-import { FirestoreWorkerStore } from './worker-store.js'
+import { FirestoreWorkerStore, MemoryWorkerStore } from './worker-store.js'
 import { registerWorkerApi } from './worker-api.js'
 import express from 'express'
 import { generateCampaign } from './agent.js'
@@ -13,8 +13,9 @@ const app = express()
 app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: false }))
 const token = process.env.APPROVAL_TOKEN || ''
-const store: CampaignStore = process.env.NODE_ENV === 'test' || process.env.USE_MEMORY_STORE === 'true' ? new MemoryCampaignStore() : new FirestoreCampaignStore()
-const workerStore = new FirestoreWorkerStore()
+const inMemory = process.env.NODE_ENV === 'test' || process.env.USE_MEMORY_STORE === 'true'
+const store: CampaignStore = inMemory ? new MemoryCampaignStore() : new FirestoreCampaignStore()
+const workerStore = inMemory ? new MemoryWorkerStore(store) : new FirestoreWorkerStore()
 registerWorkerApi(app,workerStore)
 const sessionCookie = 'marketing_session'
 
@@ -158,3 +159,4 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
 if (!token) console.warn('APPROVAL_TOKEN is not configured; protected routes will reject all requests')
 const port = Number(process.env.PORT || 8080)
 app.listen(port, () => console.log(`Marketing agent listening on ${port}`))
+
