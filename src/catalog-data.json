@@ -1,0 +1,452 @@
+{
+  "source": "natureswaysoil/best/data/products.ts",
+  "reviewedAt": "2026-10-17",
+  "products": [
+    {
+      "id": "NWS_001",
+      "name": "Liquid Lawn Soil Conditioner",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_001",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_001/main.jpg",
+      "asin": "B0822RH5L3",
+      "sku": "3L-3MPJ-6BQM",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Liquid soil conditioner with humic acid and kelp",
+        "Designed for lawn and soil maintenance"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_002",
+      "name": "Horticultural Activated Charcoal",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_002",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_002/main.jpg",
+      "asin": "B0D52CQNGN",
+      "sku": "NWS-4q-ABC",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Activated horticultural charcoal for soil conditioning",
+        "Can be mixed into potting soil"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_003",
+      "name": "Organic Tomato Liquid Fertilizer",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_003",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_003/main.jpg",
+      "asin": "B0D6886G54",
+      "sku": "P5-NP0G-5SL7",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Liquid fertilizer for tomatoes and other fruiting vegetables",
+        "Designed for tomato-growing programs"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_004",
+      "name": "Soil Booster and Loosener",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_004",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_004/main.jpg",
+      "asin": "B0D69LNC5T",
+      "sku": "9P-CSA1-NC45",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Soil conditioner for compacted soil",
+        "Designed to support soil structure and water penetration"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_006",
+      "name": "Liquid Kelp Fertilizer",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_006",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_006/main.jpg",
+      "asin": "B0F8R45FJ2",
+      "sku": "XX-XBWB-DF03",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Seaweed concentrate for lawns and gardens",
+        "Suitable for flowers and vegetables"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_011",
+      "name": "Liquid Humic & Fulvic Acid with Kelp",
+      "price": "From $19.99",
+      "url": "https://natureswaysoil.com/product/NWS_011",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_011/main.jpg",
+      "asin": "B0F9V46JPP",
+      "sku": "FP-AL1H-WYNQ",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Combines humic and fulvic acids with kelp",
+        "Soil conditioner for vegetables, flowers, trees, and lawns"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_012",
+      "name": "Liquid Bone Meal Fertilizer",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_012",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_012/main.jpg",
+      "asin": "B0F9W7B3NL",
+      "sku": "B5-G9JD-1K10",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Liquid bone meal fertilizer with calcium and phosphorus",
+        "For vegetables, trees, and shrubs"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "vegetable garden tomato plants",
+        "gardener caring for flowering plants",
+        "plant roots garden soil",
+        "fruit tree garden",
+        "garden fertilizer bottle"
+      ]
+    },
+    {
+      "id": "NWS_013",
+      "name": "Enhanced Living Compost",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_013",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_013/main.jpg",
+      "asin": "B0DDCPYLG1",
+      "sku": "WK-558E-QZUL",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Compost blend with worm castings and activated biochar",
+        "Contains fermented duckweed extract"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_014",
+      "name": "Dog Urine Neutralizer & Lawn Revitalizer",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_014",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_014/main.jpg",
+      "asin": "B0FG38YYJ5",
+      "sku": "EG-PJ13-DA9T",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Helps neutralize urine odor in treated areas",
+        "No green colorants or cosmetic cover-up"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "dog on lawn",
+        "lawn care grass",
+        "homeowner garden hose"
+      ]
+    },
+    {
+      "id": "NWS_016",
+      "name": "Organic Hydroponic Fertilizer Concentrate",
+      "price": "From $29.99",
+      "url": "https://natureswaysoil.com/product/NWS_016",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_016/main.jpg",
+      "asin": "B0D9HT7ND8",
+      "sku": "FR-IJ8R-6LQK",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Concentrated plant food for hydroponic and aquaponic growing systems",
+        "Designed for indoor growing"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "hydroponic vegetable greenhouse",
+        "hydroponic roots",
+        "indoor garden plants"
+      ]
+    },
+    {
+      "id": "NWS_018",
+      "name": "Seaweed & Humic Acid Lawn Treatment",
+      "price": "From $19.99",
+      "url": "https://natureswaysoil.com/product/NWS_018",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_018/main.jpg",
+      "asin": "B0FGWSKGCY",
+      "sku": "BH-NBDZ-1GAL",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Seaweed and humic acid lawn treatment",
+        "Designed for lawn and soil care"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    },
+    {
+      "id": "NWS_021",
+      "name": "Hay, Pasture & Lawn Fertilizer",
+      "price": "From $39.99",
+      "url": "https://natureswaysoil.com/product/NWS_021",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_021/main.jpg",
+      "asin": "B0DJ1JNQW4",
+      "sku": "VY-T7ZM-760R",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Liquid fertilizer for hay fields, pastures, and lawns",
+        "Contains a microbial nitrogen blend"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "hay field grass",
+        "farmer pasture field",
+        "tractor spraying pasture"
+      ]
+    },
+    {
+      "id": "NWS_022",
+      "name": "Hay, Pasture & Lawn Recovery System with Liquid Biochar",
+      "price": "From $179.00",
+      "url": "https://natureswaysoil.com/product/NWS_022",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_022/main.svg",
+      "asin": "",
+      "sku": "NWS-HPLRS-25GAL",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Combines liquid biochar, humic and fulvic acids, and kelp",
+        "Designed for hay fields, pastures, lawns, turf, and food plots"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "hay field grass",
+        "pasture soil roots",
+        "gardener lawn soil"
+      ]
+    },
+    {
+      "id": "NWS_023",
+      "name": "Living Soil Revitalizer",
+      "price": "From $24.99",
+      "url": "https://natureswaysoil.com/product/NWS_023",
+      "imageUrl": "https://raw.githubusercontent.com/natureswaysoil/best/main/public/images/products/NWS_023/main.svg",
+      "asin": "",
+      "sku": "NWS-LSR-4LB",
+      "inStock": true,
+      "automatic": true,
+      "audiences": [
+        "gardeners",
+        "homeowners",
+        "small farms"
+      ],
+      "approvedClaims": [
+        "Worm castings and activated biochar soil amendment",
+        "For gardens, raised beds, and containers"
+      ],
+      "prohibitedClaims": [
+        "guaranteed results",
+        "non-toxic when swallowed",
+        "drought proof",
+        "certified organic"
+      ],
+      "brollQueries": [
+        "gardener tending plants",
+        "garden soil close up",
+        "plant roots soil",
+        "watering garden plants"
+      ]
+    }
+  ],
+  "sourceCommit": "27235bf808f0db15dc1587b1fea84be4d52c5bcc"
+}

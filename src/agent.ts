@@ -40,5 +40,5 @@ export async function generateCampaign(productId: string, objective = 'conversio
   const policy = validateCampaignPolicy(draft, product)
   if (!policy.ok) throw new Error(`Campaign failed policy: ${policy.errors.join('; ')}`)
   const now = new Date().toISOString()
-  return { ...draft, id: crypto.randomUUID(), status: 'pending_approval', createdAt: now, updatedAt: now }
+  return { ...draft, schemaVersion: 1, websiteUrl: product.url, productImageUrl: product.imageUrl, asin: product.asin, sku: product.sku, id: crypto.randomUUID(), status: 'pending_approval', createdAt: now, updatedAt: now }
 }

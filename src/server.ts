@@ -1,4 +1,6 @@
 import crypto from 'node:crypto'
+import { FirestoreWorkerStore } from './worker-store.js'
+import { registerWorkerApi } from './worker-api.js'
 import express from 'express'
 import { generateCampaign } from './agent.js'
 import { PRODUCTS } from './catalog.js'
@@ -12,6 +14,8 @@ app.use(express.json({ limit: '1mb' }))
 app.use(express.urlencoded({ extended: false }))
 const token = process.env.APPROVAL_TOKEN || ''
 const store: CampaignStore = process.env.NODE_ENV === 'test' || process.env.USE_MEMORY_STORE === 'true' ? new MemoryCampaignStore() : new FirestoreCampaignStore()
+const workerStore = new FirestoreWorkerStore()
+registerWorkerApi(app,workerStore)
 const sessionCookie = 'marketing_session'
 
 function secureEqual(left: string, right: string) {
@@ -68,6 +72,7 @@ app.get('/health', (_req, res) => res.json({
     approvalToken: Boolean(token),
     openai: Boolean(process.env.OPENAI_API_KEY),
     github: Boolean(process.env.GITHUB_TOKEN),
+    worker: true,
     project: Boolean(process.env.GOOGLE_CLOUD_PROJECT)
   }
 }))
@@ -90,10 +95,14 @@ app.post('/logout', (_req, res) => {
   res.redirect('/login')
 })
 
+app.post('/automation/:action',requireDashboardAuth,async(req,res,next)=>{
+ try{const action=routeParam(req.params.action);if(!['pause','resume'].includes(action))return res.status(400).send('Unknown action');await workerStore.enable(action==='resume');res.redirect('/')}catch(error){next(error)}
+})
+
 app.get('/api/products', requireDashboardAuth, (_req, res) => res.json(PRODUCTS))
 app.get('/', requireDashboardAuth, async (_req, res, next) => {
   try {
-    res.send(renderDashboard(await store.list(), PRODUCTS))
+    res.send(renderDashboard(await store.list(), PRODUCTS, await workerStore.state()))
   } catch (error) { next(error) }
 })
 

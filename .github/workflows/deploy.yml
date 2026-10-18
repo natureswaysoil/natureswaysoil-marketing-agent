@@ -77,8 +77,9 @@ jobs:
             --platform managed \
             --no-invoker-iam-check \
             --service-account "marketing-agent@${PROJECT_ID}.iam.gserviceaccount.com" \
-            --update-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production" \
-            --update-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,GITHUB_TOKEN=GITHUB_TOKEN:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
+            --update-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GITHUB_OWNER=natureswaysoil,VIDEO_REPOSITORY=video,VIDEO_WORKFLOW=sheet-row-posting.yml,OPENAI_MODEL=gpt-5-mini,NODE_ENV=production,AUTOMATION_ENABLED=true" \
+            --remove-secrets GITHUB_TOKEN \
+            --update-secrets "OPENAI_API_KEY=OPENAI_API_KEY:latest,APPROVAL_TOKEN=MARKETING_AGENT_APPROVAL_TOKEN:latest"
           SERVICE_URL="$(gcloud run services describe "${SERVICE}" --project "${PROJECT_ID}" --region "${REGION}" --format='value(status.url)')"
           echo "SERVICE_URL=${SERVICE_URL}" >> "${GITHUB_ENV}"
           echo "### Production deployment" >> "${GITHUB_STEP_SUMMARY}"
