@@ -32,3 +32,7 @@ Deploy the agent before updating the trusted `natureswaysoil/video` workflow. Th
 The catalog snapshot and reviewed claims live in `src/catalog-data.json`. Update those from verified product sources. Do not import arbitrary website claims into unattended copy. Snapshot stock flags are not live Amazon inventory.
 
 Campaign profitability/eligibility reads are optional and require the separate dedicated read-only secret configured by `scripts/connect-campaign-reader.sh`. The agent never needs the optimizer operator token.
+
+## Retail & wholesale pipeline
+
+The authenticated `/retail` dashboard manages prospect research, verified buyer contact details, unsent liquid bone meal introduction drafts, follow-up dates and opt-outs. There is **no automated outbound sending**. See [RETAIL_WHOLESALE.md](RETAIL_WHOLESALE.md) for buyer research and rollout controls.
