@@ -1,4 +1,5 @@
 import crypto from 'node:crypto'
+import { nextFollowUpDate } from './retail-outreach.js'
 import type express from 'express'
 import { renderRetailDashboard } from './retail-dashboard.js'
 import type { RetailChannel, ProspectStatus, RetailProspect } from './retail-outreach.js'
@@ -28,7 +29,10 @@ export function registerRetailRoutes(app: express.Express, auth: express.Request
       const status=string(req.body.status) as ProspectStatus;if(!statuses.includes(status))return res.status(400).send('Invalid status')
       if(current.optedOut && status==='approved_to_send')return res.status(409).send('Opted-out contacts cannot be approved')
       if(status==='approved_to_send' && (!current.emailVerified || !current.buyerEmail))return res.status(409).send('Verified email required')
-      await store.save({...current,status});res.redirect('/retail')
+      const now = new Date().toISOString()
+      const contactChanged = status === 'contacted' && current.status !== 'contacted'
+      const update = {...current,status,...(contactChanged ? {lastContactAt:now,followUpDue:nextFollowUpDate(now)} : {})}
+      await store.save(update);res.redirect('/retail')
     }catch(e){next(e)}
   })
   app.post('/retail/:id/optout',auth,async(req,res,next)=>{
