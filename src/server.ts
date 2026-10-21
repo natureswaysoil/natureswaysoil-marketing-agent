@@ -1,4 +1,6 @@
 import crypto from 'node:crypto'
+import { FirestoreRetailStore, MemoryRetailStore } from './retail-store.js'
+import { registerRetailRoutes } from './retail-routes.js'
 import { FirestoreWorkerStore, MemoryWorkerStore } from './worker-store.js'
 import { registerWorkerApi } from './worker-api.js'
 import express from 'express'
@@ -15,6 +17,8 @@ app.use(express.urlencoded({ extended: false }))
 const token = process.env.APPROVAL_TOKEN || ''
 const inMemory = process.env.NODE_ENV === 'test' || process.env.USE_MEMORY_STORE === 'true'
 const store: CampaignStore = inMemory ? new MemoryCampaignStore() : new FirestoreCampaignStore()
+const retailStore = inMemory ? new MemoryRetailStore() : new FirestoreRetailStore()
+registerRetailRoutes(app, requireDashboardAuth, retailStore)
 const workerStore = inMemory ? new MemoryWorkerStore(store) : new FirestoreWorkerStore()
 registerWorkerApi(app,workerStore)
 const sessionCookie = 'marketing_session'
