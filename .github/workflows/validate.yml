@@ -1,5 +1,7 @@
 name: Validate marketing agent changes
 on:
+  push:
+    branches: [feature/retail-wholesale-outreach]
   pull_request:
     paths:
       - 'src/**'
